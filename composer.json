@@ -1,0 +1,39 @@
+{
+    "name": "shetabit/module-generator",
+    "description": "",
+    "homepage"   :" ",
+    "keywords": [],
+    "type": "package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "komeyl-dev",
+            "email": "komeyl.kalbali.dev@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "illuminate/support": "^8.0|8.*",
+        "nwidart/laravel-modules": "^8.2",
+        "nette/php-generator": "v3.5.x-dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Shetabit\\ModuleGenerator\\": "src"
+        },
+        "classmap": [
+            "src/Classes"
+        ],
+        "files": [
+            "src/Helpers/Helper.php"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Shetabit\\ModuleGenerator\\Provider\\GeneratorServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev"
+}

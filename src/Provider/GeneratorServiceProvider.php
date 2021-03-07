@@ -1,0 +1,37 @@
+<?php
+
+namespace Shetabit\ModuleGenerator\Provider;
+
+use Illuminate\Support\ServiceProvider;
+use Shetabit\ModuleGenerator\Contracts\ControllerGenerator;
+use Shetabit\ModuleGenerator\Contracts\MigrationGenerator;
+use Shetabit\ModuleGenerator\Contracts\ModelGenerator;
+use Shetabit\ModuleGenerator\Contracts\ModuleGenerator;
+use Shetabit\ModuleGenerator\Contracts\RouteGenerator;
+
+class GeneratorServiceProvider extends ServiceProvider
+{
+    public function register()
+    {
+        $this->app->singleton(ModuleGenerator::class, function () {
+            return new \Shetabit\ModuleGenerator\Classes\ModuleGenerator();
+        });
+        $this->app->singleton(ModelGenerator::class, function ($module, $models) {
+            return new \Shetabit\ModuleGenerator\Classes\ModelGenerator($models[0] , $models[1]);
+        });
+        $this->app->singleton(MigrationGenerator::class, function ($module, $models) {
+            return new \Shetabit\ModuleGenerator\Classes\MigrationGenerator($models[0] , $models[1]);
+        });
+        $this->app->singleton(ControllerGenerator::class, function ($module, $models) {
+            return new \Shetabit\ModuleGenerator\Classes\ControllerGenerator($models[0] , $models[1]);
+        });
+        $this->app->singleton(RouteGenerator::class, function ($module, $models) {
+            return new \Shetabit\ModuleGenerator\Classes\RouteGenerator($models[0] , $models[1]);
+        });
+    }
+
+    public function boot()
+    {
+
+    }
+}
