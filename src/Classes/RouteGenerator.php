@@ -53,7 +53,7 @@ class RouteGenerator
             $this->pathOfRoute = module_path($module) . "/Routes/api.php";
             $namespace = new PhpNamespace('');
             if($i == 0) { $namespace->addUse(Route::class);  $this->finalTemplate .='<?php' . PHP_EOL;}
-            $this->finalTemplate .=  $this->RouteTemplateGenerator($option[0] , $namespace);
+            $this->finalTemplate .=  $this->GenerateRouteTemplates($option[0] , $namespace);
             $this->touchAndPutContent($this->finalTemplate);
             $this->message .=  "|-- ".$this->nameRoute." Route successfully generate" . PHP_EOL;
             $i++;
@@ -61,7 +61,7 @@ class RouteGenerator
         return $this->message;
     }
 
-    public function RouteTemplateGenerator($option , $namespace): string
+    public function GenerateRouteTemplates($option , $namespace): string
     {
 
         $namespace .= "Route::name('".Str::snake($this->nameRoute).".')";

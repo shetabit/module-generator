@@ -1,14 +1,9 @@
 <?php
 
-
 namespace Shetabit\ModuleGenerator\Classes;
 
-
-use App\Http\Controllers\Controller;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Nette\PhpGenerator\ClassType;
@@ -35,11 +30,12 @@ class MigrationGenerator
         if (!key_exists('Models', $this->models)) return '';
         foreach ($this->models as $key => $model) {
             $this->pathOfMigration = module_path($this->module) . "/Database/Migrations/";
-            return $this->MigrationsGenerator($model);
+            return $this->migrationsGenerator($model);
         }
+
     }
 
-    public function MigrationsGenerator($model): string
+    public function migrationsGenerator($model): string
     {
         foreach ($model as $key => $fields) {
             $this->nameOfMigration = $key;
@@ -58,7 +54,7 @@ class MigrationGenerator
     public function addMethodsInMigration(ClassType $class , $fields)
     {
         $methodUp = $class->addMethod('up')
-            ->addBody("Schema::create('".Str::plural(Str::snake($this->nameOfMigration))."', function (Blueprint \$table) {".PHP_EOL."\t \$table->id();");
+         ->addBody("Schema::create('".Str::plural(Str::snake($this->nameOfMigration))."', function (Blueprint \$table) {".PHP_EOL."\t \$table->id();");
         $methodUp->addBody($this->addFieldsInMethod($fields));
         $methodUp->addBody("\t \$table->timestamps();".PHP_EOL."});");
 
@@ -73,12 +69,12 @@ class MigrationGenerator
         foreach($fields as $key => $infoField){
             $field = "\t \$table->".$infoField['type']."('".$key."')";
             if (!key_exists('options', $infoField)) return $field.";";
-            return $this->AddOptionsInFields($field  ,$infoField['options']);
+            return $this->addOptionsInFields($field  ,$infoField['options']);
         }
         return $fields;
     }
 
-    public function AddOptionsInFields($field , $options)
+    public function addOptionsInFields($field , $options)
     {
         foreach ($options as $key => $value) {
             if (!is_numeric($key)){

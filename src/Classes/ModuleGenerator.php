@@ -51,6 +51,11 @@ class ModuleGenerator
 
                 $this->result .= app(\Shetabit\ModuleGenerator\Contracts\RouteGenerator::class, [$module, $model])
                     ->generate();
+                $this->result .= app(\Shetabit\ModuleGenerator\Contracts\RequestGenerator::class, [$module, $model])
+                    ->generate();
+
+//                $this->result .= app(\Shetabit\ModuleGenerator\Contracts\ForeignKeyGenerator::class, [$module, $model])
+//                    ->generate();
             }
         }
         echo($this->result);

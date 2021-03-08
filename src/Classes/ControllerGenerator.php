@@ -2,7 +2,6 @@
 
 namespace Shetabit\ModuleGenerator\Classes;
 
-
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
@@ -31,18 +30,18 @@ class ControllerGenerator
         foreach ($this->models as $model => $attribute) {
             if (!key_exists('CRUD', $attribute)) return '';
             $this->CRUD = $attribute['CRUD'];
-            return $this->ControllerGenerator($this->module);
+            return $this->controllerGenerator($this->module);
         }
     }
 
 
 
-    public function ControllerGenerator($module): string
+    public function controllerGenerator($module): string
     {
         foreach ($this->CRUD as $name => $option) {
             $this->nameController = $name;
             $this->pathOfController = module_path($module) . "/Http/Controllers/".$this->nameController."/";
-            $template =  $this->ControllerTemplateGenerator($option[0]);
+            $template =  $this->generateControllerTemplates($option[0]);
             $template = '<?php' . PHP_EOL . $template;
             $this->createDirectory();
             $this->touchAndPutContent($template);
@@ -51,7 +50,7 @@ class ControllerGenerator
         return $this->message;
     }
 
-    public function ControllerTemplateGenerator($option): PhpNamespace
+    public function generateControllerTemplates($option): PhpNamespace
     {
         $namespace = new PhpNamespace('Modules\\' . $this->module . '\Http\Controllers\\'.$this->nameController);
         $namespace->addUse(Controller::class)
