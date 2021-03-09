@@ -69,15 +69,15 @@ class RouteGenerator
         $namespace .= "->prefix('".Str::snake($this->nameRoute)."')";
         $namespace .= "->group(function(){".PHP_EOL;
         $namespace = $this->setBody($namespace , $option);
-        $namespace .= PHP_EOL."});";
-
+        $namespace .= "});".PHP_EOL;
         return $namespace;
     }
 
     public function setBody($route , $option)
     {
         if ($option == "CRUD"){
-            return "\tRoute::apiResource('".$this->nameRoute."' , '".$this->nameRoute."Controller');";
+             $route .= "\tRoute::apiResource('".$this->nameRoute."' , '".$this->nameRoute."Controller');".PHP_EOL;
+            return $route;
         }
         for ($i = 0; $i< strlen($option) ; $i++){
 

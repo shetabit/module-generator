@@ -3,6 +3,8 @@
 namespace Shetabit\ModuleGenerator\Classes;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
 use Shetabit\ModuleGenerator\Helpers\Helper;
 
@@ -14,6 +16,7 @@ class ModelGenerator
     protected $models;
     protected $module;
     protected $pathOfModel;
+    protected array $withRelation = [];
 
     public function __construct($module , $models)
     {
@@ -48,14 +51,18 @@ class ModelGenerator
         $class = $namespace->addClass($model);   //create your Model
         $class->setExtends(Model::class);
 
+
         //check exists Fields key in attribute array
         if (key_exists('Fields', $attribute)) {
             $namespace = $this->setFallibleInModel($class, $attribute, $namespace);
         }
         //check exists Relations key in attribute array
         if (key_exists('Relations', $attribute)) {
+            $this->addWithCommonRelations($class);
             $this->setRelationsInModel($namespace, $class, $attribute);
         }
+        $class->addProperty('commonRelations' , $this->withRelation)->setType('array')->setProtected()->setStatic();
+
         return $namespace;
     }
 
@@ -66,7 +73,7 @@ class ModelGenerator
             $fallible[] = $key;
         }
 
-        $class->addProperty('fallible', $fallible)->setProtected();
+        $class->addProperty('fallible', $fallible)->setType('array')->setProtected();
         $this->touchAndPutContent('<?php' . PHP_EOL . $namespace);
         return $namespace;
     }
@@ -77,7 +84,7 @@ class ModelGenerator
         file_put_contents($this->pathOfModel, $template);
     }
 
-    public function setRelationsInModel($namespace, $class , $attribute)
+    public function setRelationsInModel($namespace, ClassType $class , $attribute)
     {
         foreach ($attribute['Relations'] as $typeRelation => $relations) {
             foreach ($relations as $value) {
@@ -90,14 +97,12 @@ class ModelGenerator
                 $relationModel = explode('::', $value)[0];
                 $baseRelationName = explode('::', $value)[1];
 
-                $relationName = Helper::configurationRelationsName($baseRelationName, $typeRelation);
-
-                $namespace->addUse('Modules\\' . $relationModel . '\Entities\\' . $relationName);
-                // Now Create Function Of Relation
-                $method = $class->addMethod($relationName);
-                $method->addBody('return $this->' . $typeRelation . '(' . $baseRelationName . '::class);')
+                $relationName = strtolower(Helper::configurationRelationsName($baseRelationName, $typeRelation));
+                $this->withRelation[] = $relationName;
+                $namespace->addUse('Modules\\' . Str::camel($relationModel) . '\Entities\\' . $relationName);
+                $class->addMethod($relationName)
+                    ->addBody('return $this->' . Str::camel($typeRelation) . '(' . $baseRelationName . '::class);')
                     ->setReturnType('Illuminate\Database\Eloquent\Relations\\' . $typeRelation);
-                return $namespace;
             }
         }
         return $namespace;
@@ -107,5 +112,14 @@ class ModelGenerator
     public function __toString(): string
     {
         return $this->message;
+    }
+
+    public function addWithCommonRelations(ClassType $class)
+    {
+        $class->addMethod('scopeWithCommonRelations')
+            ->addBody('if (isset(static::$commonRelations) && !empty(static::$commonRelations)) {')
+            ->addBody("\t\$query->with(static::\$commonRelations);")
+            ->addBody('}')
+            ->addParameter('query');
     }
 }

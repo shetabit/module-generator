@@ -1,6 +1,7 @@
 <?php
 namespace Shetabit\ModuleGenerator\Classes;
 
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use League\Flysystem\Config;
 use function PHPUnit\Framework\isEmpty;
@@ -35,10 +36,9 @@ class ModuleGenerator
 
         foreach ($modules as $module => $model){
             Artisan::call('module:make ' . $module);  // ModulesGenerator
-            $this->result .= "Modules ".$module." Successfully Generate".PHP_EOL;
+            $this->result .= "* Modules ".$module." Successfully Generate".PHP_EOL;
 
             if (key_exists('Models', $model)) {
-
 
                 $this->result .= app(\Shetabit\ModuleGenerator\Contracts\ModelGenerator::class, [$module, $model])
                     ->generate();
@@ -58,8 +58,6 @@ class ModuleGenerator
 //                    ->generate();
             }
         }
-        echo($this->result);
+        print($this->result);
     }
-
-
 }

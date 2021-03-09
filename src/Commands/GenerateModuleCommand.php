@@ -31,6 +31,7 @@ class GenerateModuleCommand extends Command
     public function __construct()
     {
         parent::__construct();
+
     }
 
     /**
@@ -40,9 +41,18 @@ class GenerateModuleCommand extends Command
      */
     public function handle()
     {
+        if (!file_exists(config_path()."/modulegenerator.php")){
+            $this->error("Create your module generator config file ");
+            $this->warn("Path for creating =>". config_path());
+            die();
+        }
+        $processes = count(\config()->get('modulegenerator') , COUNT_RECURSIVE);
+        $Progress = $this->getOutput()->createProgressBar($processes);
+        $Progress->setBarCharacter("/");
         $moduleGenerator = app(ModuleGenerator::class);
         $moduleGenerator->generate();
-
-        $this->info('Generate successfully');
+        $Progress->finish();
+        $this->info("");
+        $this->alert("Generate Successfully");
     }
 }

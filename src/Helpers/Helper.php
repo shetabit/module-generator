@@ -19,12 +19,13 @@ class Helper
 
     public static function configurationRelationsName($relationName , $typeRelation)
     {
-        if ($typeRelation == ('HasMany' || 'hasManyThrough' || 'belongsToMany' || 'morphMany' || 'morphToMany')){
-            $relationName = Str::plural($relationName);
-        }
         if ($typeRelation == 'morphTo'){
-            $relationName = $relationName.'able';
+            return $relationName = $relationName.'able';
         }
+        if ($typeRelation == ('HasMany' || 'hasManyThrough' || 'belongsToMany' || 'morphMany' || 'morphToMany')){
+            return $relationName = Str::plural($relationName);
+        }
+
         return $relationName;
     }
 
