@@ -27,11 +27,17 @@ class ControllerGenerator
      */
     protected $baseRelationName;
     protected $attributes;
+<<<<<<< HEAD
+=======
+    protected $config;
+>>>>>>> 73a07f9... first commit
 
     public function __construct($module, $models)
     {
         $this->models = $models['Models'];
         $this->module = $module;
+        $this->config = \config()->get('moduleConfig');
+
     }
 
     public function generate(): string
@@ -74,6 +80,7 @@ class ControllerGenerator
 
     public function setMethodToController($class, $option, $namespace)
     {
+<<<<<<< HEAD
             if (strpos($option , 'R') == true) {
                 $this->indexAndShowMethodGenerator($class);
             }
@@ -84,6 +91,18 @@ class ControllerGenerator
                 $this->editAndUpdateMethodGenerator($class, $namespace);
             }
             if (strpos($option, 'D') == true) {
+=======
+            if (str_contains($option , 'R')) {
+                $this->indexAndShowMethodGenerator($class);
+            }
+            if (str_contains($option, 'C')) {
+                $this->createAndStoreMethodGenerator($class);
+            }
+            if (str_contains($option, 'U')) {
+                $this->editAndUpdateMethodGenerator($class , $namespace);
+            }
+            if (str_contains($option, 'D')) {
+>>>>>>> 73a07f9... first commit
                 $this->destroyMethodGenerator($class);
             }
     }
@@ -93,6 +112,7 @@ class ControllerGenerator
         $method = $class->addMethod('index');
         if (key_exists('Relations', $this->attributes)) {
             $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::withCommonRelations()->get();' . PHP_EOL)
+<<<<<<< HEAD
                 ->addBody('return response()->json($' . strtolower($this->modelName) . 's);');
         } else {
             $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::query()->get();' . PHP_EOL)
@@ -101,6 +121,16 @@ class ControllerGenerator
         $class->addMethod('show')
             ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);' . PHP_EOL)
             ->addBody('return response()->json($' . strtolower($this->modelName) . ');')
+=======
+                ->addBody($this->config['return']);
+        } else {
+            $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::query()->get();' . PHP_EOL)
+                ->addBody($this->config['return']);
+        }
+        $class->addMethod('show')
+            ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);' . PHP_EOL)
+            ->addBody($this->config['return'])
+>>>>>>> 73a07f9... first commit
             ->addParameter('id')->setType('Int');
     }
 
@@ -129,6 +159,12 @@ class ControllerGenerator
     {
         if (key_exists('Relations', $this->attributes)) {
             foreach ($this->attributes['Relations'] as $typeRelation => $relations) {
+<<<<<<< HEAD
+=======
+                if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
+                    return '';
+                }
+>>>>>>> 73a07f9... first commit
                 foreach ($relations as $value) {
                     $this->baseRelationName = explode('::', $value)[1];
                     $this->relationName = Helper::configurationRelationsName($this->baseRelationName, $typeRelation);
@@ -138,21 +174,36 @@ class ControllerGenerator
         }
     }
 
+<<<<<<< HEAD
     public function editAndUpdateMethodGenerator(ClassType $class, $namespace)
+=======
+    public function editAndUpdateMethodGenerator(ClassType $class , $namespace)
+>>>>>>> 73a07f9... first commit
     {
         $method = $class->addMethod('edit');
         if (key_exists('Relations', $this->attributes)) {
             $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::withCommonRelations()->findOrFail($id);' . PHP_EOL)
+<<<<<<< HEAD
                 ->addBody('return response()->json($' . strtolower($this->modelName) . ');');
         } else {
             $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);' . PHP_EOL)
                 ->addBody('return response()->json($' . strtolower($this->modelName) . ');');
+=======
+                ->addBody($this->config['return']);
+        } else {
+            $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);' . PHP_EOL)
+                ->addBody($this->config['return']);
+>>>>>>> 73a07f9... first commit
         };
         $method->addParameter('id')->setType('Int');
 
         $method = $class->addMethod('update')
             ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);');
+<<<<<<< HEAD
         $this->UpdateMethodFindIntoRelation($method, $namespace);
+=======
+        $this->UpdateMethodFindIntoRelation($method , $namespace);
+>>>>>>> 73a07f9... first commit
         $this->associateInUpdate($method);
         $method->addBody('$' . strtolower($this->modelName) . '->fill($request->all());')
             ->addBody('$' . strtolower($this->modelName) . '->save();'.PHP_EOL)
@@ -164,10 +215,20 @@ class ControllerGenerator
         $method->addParameter('id')->setType('Int');
     }
 
+<<<<<<< HEAD
     public function UpdateMethodFindIntoRelation($method, $namespace)
     {
         if (key_exists('Relations', $this->attributes)) {
             foreach ($this->attributes['Relations'] as $typeRelation => $relations) {
+=======
+    public function UpdateMethodFindIntoRelation($method ,$namespace)
+    {
+        if (key_exists('Relations', $this->attributes)) {
+            foreach ($this->attributes['Relations'] as $typeRelation => $relations) {
+                if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
+                    return '';
+                }
+>>>>>>> 73a07f9... first commit
                 foreach ($relations as $value) {
                     $this->baseRelationName = explode('::', $value)[1];
                     $method->addBody('$' . strtolower($this->baseRelationName) . ' = ' . ucfirst($this->baseRelationName) . '::query()->findOrFail($request->' . strtolower($this->baseRelationName) . '_id);');
@@ -181,6 +242,12 @@ class ControllerGenerator
     {
         if (key_exists('Relations', $this->attributes)) {
             foreach ($this->attributes['Relations'] as $typeRelation => $relations) {
+<<<<<<< HEAD
+=======
+                if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
+                    return '';
+                }
+>>>>>>> 73a07f9... first commit
                 foreach ($relations as $value) {
                     $this->baseRelationName = explode('::', $value)[1];
                     $this->relationName = Helper::configurationRelationsName($this->baseRelationName, $typeRelation);
@@ -194,7 +261,11 @@ class ControllerGenerator
     {
         $class->addMethod('destroy')
             ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::destroy($id);' . PHP_EOL)
+<<<<<<< HEAD
                 ->addBody('return response()->json($' . strtolower($this->modelName) . ');')
+=======
+                ->addBody($this->config['return'])
+>>>>>>> 73a07f9... first commit
             ->addParameter('id')->setType('Int');
     }
 
