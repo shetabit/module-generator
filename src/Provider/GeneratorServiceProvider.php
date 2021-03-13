@@ -4,6 +4,7 @@ namespace Shetabit\ModuleGenerator\Provider;
 
 use Illuminate\Support\ServiceProvider;
 use Shetabit\ModuleGenerator\Commands\GenerateModuleCommand;
+use Shetabit\ModuleGenerator\Commands\PublishModuleGeneratorCommand;
 use Shetabit\ModuleGenerator\Contracts\ControllerGenerator;
 use Shetabit\ModuleGenerator\Contracts\ForeignKeyGenerator;
 use Shetabit\ModuleGenerator\Contracts\MigrationGenerator;
@@ -44,6 +45,7 @@ class GeneratorServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 GenerateModuleCommand::class,
+                PublishModuleGeneratorCommand::class
             ]);
         }
 

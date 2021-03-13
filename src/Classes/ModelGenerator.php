@@ -17,10 +17,8 @@ class ModelGenerator
     protected $module;
     protected $pathOfModel;
     protected array $withRelation = [];
-<<<<<<< HEAD
-=======
     protected $modelName;
->>>>>>> 73a07f9... first commit
+
 
     public function __construct($module , $models)
     {
@@ -131,8 +129,6 @@ class ModelGenerator
             ->addBody('}')
             ->addParameter('query');
     }
-<<<<<<< HEAD
-=======
 
     public function morphRelation($class)
     {
@@ -142,5 +138,4 @@ class ModelGenerator
             ->addBody('return $this->morphTo();')
             ->setReturnType('Illuminate\Database\Eloquent\Relations\morphTo');
     }
->>>>>>> 73a07f9... first commit
 }
