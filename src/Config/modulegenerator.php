@@ -1,44 +1,31 @@
 <?php
-#Example Format Config
+
 return [
     "Modules" => [
         "Blog" => [
             "Models" => [
                 "Post" => [
                     "Fields" => [
-                        "Description" => ["type" => "string", "options" => ['default' => '1', 'index']],
-                        "Title" => ["type" => "string"],
+                        "Title" => ["type" => "string", "required" => true],
+                        "Description" => ["type" => "string", "required" => true],
                     ],
                     "Relations" => [
-                        "BelongsToMany" => [
-                            "Blog::Category",
-                        ],
-                        "morphTo",
+                        "BelongsTo" => [
+                            "Blog::Category" => true
+                        ]
                     ],
                     "CRUD" => [
                         "Admin" => ["CRUD"],
-                        "Post" => ["CUD"],
-                        "User" => ["CRD"],
-                    ],
-                    "Requests" =>[
-                        "admin" => [
-                            "store" =>[
-                                'title' => ['required' , "in:2,3"]
-                            ],
-                            "update" =>[
-                                'description' => ['required', "in:5,2"]
-                            ]
-                        ]
-
+                        "User" => ["R"],
                     ]
                 ],
                 "Category" => [
                     "Fields" => [
-                        "Title" => ["type" => "string"]
+                        "Title" => ["type" => "string", "required" => true]
                     ],
                     "Relations" => [
                         "HasMany" => [
-                            "Blog::Post"
+                            "Blog::Post" => true
                         ]
                     ],
                     "CRUD" => [
@@ -49,4 +36,11 @@ return [
             ]
         ]
     ],
+
+    "Auth" => [
+        "Admin" => ["guard" => "admin-api"],
+        "User" => ["guard" => "user-api"],
+        "All" => ["guard" => null]
+    ]
+
 ];

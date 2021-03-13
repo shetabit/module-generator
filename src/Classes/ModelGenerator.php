@@ -17,7 +17,6 @@ class ModelGenerator
     protected $module;
     protected $pathOfModel;
     protected array $withRelation = [];
-    protected $modelName;
 
     public function __construct($module , $models)
     {
@@ -34,7 +33,6 @@ class ModelGenerator
     public function generateModels($models): string
     {
         foreach ($models as $model => $attribute) {
-            $this->modelName = $model;
             $this->pathOfModel = module_path($this->module) . "/Entities/" . $model . '.php';
 
             $template = $this->generateModelTemplates($model, $attribute);
@@ -89,10 +87,6 @@ class ModelGenerator
     public function setRelationsInModel($namespace, ClassType $class , $attribute)
     {
         foreach ($attribute['Relations'] as $typeRelation => $relations) {
-            if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
-                $this->morphRelation($class);
-                return '';
-            }
             foreach ($relations as $value) {
                 /**
                  * @variable relationName Return name of relation example =>  Category
@@ -127,14 +121,5 @@ class ModelGenerator
             ->addBody("\t\$query->with(static::\$commonRelations);")
             ->addBody('}')
             ->addParameter('query');
-    }
-
-    public function morphRelation($class)
-    {
-        $relationName = strtolower(Helper::configurationRelationsName($this->modelName, 'morphTo'));
-        $this->withRelation[] = $relationName;
-        $class->addMethod($relationName)
-            ->addBody('return $this->morphTo();')
-            ->setReturnType('Illuminate\Database\Eloquent\Relations\morphTo');
     }
 }

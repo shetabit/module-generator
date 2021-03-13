@@ -31,14 +31,14 @@ class RequestGenerator
     public function generate(): string
     {
         if (!key_exists('Models', $this->models)) return '';
-            return $this->generateRequests($this->models['Models']);
+        return $this->generateRequests($this->models['Models']);
     }
 
     public function generateRequests($models)
     {
         foreach ($models as $model => $value) {
             if (!key_exists('Requests', $value)) return '';
-                return $this->generateRequestTemplates($model, $value['Requests']);
+            return $this->generateRequestTemplates($model, $value['Requests']);
 
         }
     }
@@ -74,8 +74,7 @@ class RequestGenerator
          * @var $method  GlobalFunction
          */
         foreach ($items as $field => $roles) {
-            $encodedRoles = json_encode($roles);
-            return $method->addBody("'".$field."' => ".$encodedRoles.",");
+            return $method->addBody("'".$field."' => ".json_encode($roles).",");
         }
     }
 

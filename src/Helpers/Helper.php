@@ -29,14 +29,14 @@ class Helper
         return $relationName;
     }
 
-    public function pivotTableName($first , $second, $separator = '_'): string
+    public function manyToManyTableName($first , $second ): string
     {
         $this->firstAlpha = array_search(strtoupper($first[0]) , self::alphabet);
         $this->secondAlpha = array_search(strtoupper($second[0]) , self::alphabet);
 
-        if ($this->firstAlpha > $this->secondAlpha) return strtolower($second).$separator.strtolower($first);
-        if ($this->firstAlpha < $this->secondAlpha) return strtolower($first).$separator.strtolower($second);
-        if ($this->firstAlpha == $this->secondAlpha) return strtolower($first).$separator.strtolower($second);
+        if ($this->firstAlpha > $this->secondAlpha) return strtolower($first)."_".strtolower($second);
+        if ($this->firstAlpha < $this->secondAlpha) return strtolower($second)."_".strtolower($first);
+        if ($this->firstAlpha == $this->secondAlpha) return strtolower($first)."_".strtolower($second);
     }
 
 }
