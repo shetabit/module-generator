@@ -21,7 +21,7 @@ class PublishModuleGeneratorCommand extends Command
      *
      * @var string
      */
-    protected $description = 'create your module';
+    protected $description = 'publish config file';
 
     /**
      * Create a new command instance.

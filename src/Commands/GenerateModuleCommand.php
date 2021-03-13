@@ -47,6 +47,15 @@ class GenerateModuleCommand extends Command
             die();
         }
 
+        $this->info("
+       _____  _            _          _      _  _
+      / ____|| |          | |        | |    (_)| |
+     | (___  | |__    ___ | |_  __ _ | |__   _ | |_
+      \___ \ | '_ \  / _ \| __|/ _` || '_ \ | || __|
+      ____) || | | ||  __/| |_| (_| || |_) || || |_
+     |_____/ |_| |_| \___| \__|\__,_||_.__/ |_| \__|
+        ");
+        $this->info('Generating ... ');
         $processes = count(\config()->get('modulegenerator') , COUNT_RECURSIVE);
         $Progress = $this->getOutput()->createProgressBar($processes);
         $Progress->setBarCharacter("/");
@@ -54,6 +63,6 @@ class GenerateModuleCommand extends Command
         $moduleGenerator->generate();
         $Progress->finish();
         $this->info("");
-        $this->alert("Generate Successfully");
+        $this->info("Generate Successfully");
     }
 }
