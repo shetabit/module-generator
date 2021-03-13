@@ -38,12 +38,16 @@ class MigrationGenerator
     public function migrationsGenerator($model): string
     {
         foreach ($model as $key => $fields) {
+            $relation = null;
+            if (key_exists('Relations', $fields)) {
+                $relation = $fields['Relations'];
+            }
             $this->nameOfMigration = $key;
             $namespace = new PhpNamespace('');
             $namespace->addUse(Migration::class)->addUse(Blueprint::class)->addUse(Schema::class);
             $class = $namespace->addClass('Create' . Str::plural($this->nameOfMigration) . 'Table');
             $class->setExtends(Migration::class);
-            $this->addMethodsInMigration($class, $fields['Fields']);
+            $this->addMethodsInMigration($class, $fields['Fields'] , $relation);
             $template = '<?php' . PHP_EOL . $namespace;
             $this->touchAndPutContent($template);
             $this->message .= "|-- Migration " . $this->nameOfMigration . " successfully generate" . PHP_EOL;
@@ -51,13 +55,22 @@ class MigrationGenerator
         return $this->message;
     }
 
-    public function addMethodsInMigration(ClassType $class , $fields)
+    public function addMethodsInMigration(ClassType $class , $fields , $relation)
     {
+
         $methodUp = $class->addMethod('up')
          ->addBody("Schema::create('".Str::plural(Str::snake($this->nameOfMigration))."', function (Blueprint \$table) {".PHP_EOL."\t \$table->id();");
         $methodUp->addBody($this->addFieldsInMethod($fields));
-        $methodUp->addBody("\t \$table->timestamps();".PHP_EOL."});");
+        if ($relation != null) {
+            foreach ($relation as $key => $item) {
+                if (!is_array($item) && Str::camel($item) == 'morphTo') {
+                    $methodUp->addBody("\t \$table->integer('" . strtolower($this->nameOfMigration) . "able_id');");
+                    $methodUp->addBody("\t \$table->string('" . strtolower($this->nameOfMigration) . "able_type');");
 
+                }
+            }
+        }
+        $methodUp->addBody("\t \$table->timestamps();".PHP_EOL."});");
         $class->addMethod('down')
             ->addBody("Schema::dropIfExists('".Str::plural(Str::snake($this->nameOfMigration))."');");
         return $class;
