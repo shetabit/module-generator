@@ -3,6 +3,7 @@
 namespace Shetabit\ModuleGenerator\Provider;
 
 use Illuminate\Support\ServiceProvider;
+use Shetabit\ModuleGenerator\Commands\GenerateModuleCommand;
 use Shetabit\ModuleGenerator\Contracts\ControllerGenerator;
 use Shetabit\ModuleGenerator\Contracts\ForeignKeyGenerator;
 use Shetabit\ModuleGenerator\Contracts\MigrationGenerator;
@@ -40,11 +41,17 @@ class GeneratorServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                GenerateModuleCommand::class,
+            ]);
+        }
+
         $this->publishes([
             __DIR__.'/../Config/modulegenerator.php' => config_path('modulegenerator.php'),
-        ]);
-        $this->publishes([
             __DIR__.'/../Config/moduleConfig.php' => config_path('moduleConfig.php'),
-        ]);
+
+        ],'config');
+
     }
 }

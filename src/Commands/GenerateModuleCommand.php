@@ -46,6 +46,9 @@ class GenerateModuleCommand extends Command
             $this->warn("Path for creating =>". config_path());
             die();
         }
+
+        $this->callSilent('vendor:publish', ['--tag' => 'config' ,'--force' => true]);
+
         $processes = count(\config()->get('modulegenerator') , COUNT_RECURSIVE);
         $Progress = $this->getOutput()->createProgressBar($processes);
         $Progress->setBarCharacter("/");
