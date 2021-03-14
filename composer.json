@@ -1,7 +1,7 @@
 {
     "name": "shetabit/module-generator",
     "description": "",
-    "keywords": [],
+    "keywords": ['module', 'module-generator', 'laravel', 'laravel_module', 'shetabit', 'generator'],
     "type": "package",
     "license": "MIT",
     "authors": [
