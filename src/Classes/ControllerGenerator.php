@@ -28,24 +28,29 @@ class ControllerGenerator
      */
     protected $baseRelationName;
     protected $attributes;
-    protected $config;
+    protected $return;
 
     public function __construct($module, $models)
     {
         $this->models = $models['Models'];
         $this->module = $module;
-        $this->config = \config()->get('moduleConfig');
-
+        $config = \config('generator');
+        $this->return = $config['return_statement'];
     }
 
     public function generate(): string
     {
         foreach ($this->models as $model => $this->attributes) {
             $this->modelName = $model;
-            if (!key_exists('CRUD', $this->attributes)) return '';
+            if (!key_exists('CRUD', $this->attributes)) {
+                return '';
+            }
             $this->CRUD = $this->attributes['CRUD'];
+
             return $this->controllerGenerator($this->module);
         }
+
+        return '';
     }
 
     public function controllerGenerator($module): string
@@ -57,8 +62,9 @@ class ControllerGenerator
             $template = '<?php' . PHP_EOL . $template;
             $this->createDirectory();
             $this->touchAndPutContent($template);
-            $this->message .= "|-- " . $this->nameController . "Controller successfully generate" . PHP_EOL;
+            $this->message .= "|-- " . $this->nameController . "Controller successfully generated" . PHP_EOL;
         }
+
         return $this->message;
     }
 
@@ -96,27 +102,29 @@ class ControllerGenerator
     {
         $method = $class->addMethod('index');
         if (key_exists('Relations', $this->attributes)) {
-            $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::withCommonRelations()->get();' . PHP_EOL)
-                ->addBody($this->config['return']);
+            $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::withCommonRelations()->get();')
+                ->addBody($this->getReturnStatement(true));
         } else {
-            $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::query()->get();' . PHP_EOL)
-                ->addBody($this->config['return']);
+            $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::query()->get();')
+                ->addBody($this->getReturnStatement(true));
         }
         $class->addMethod('show')
-            ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);' . PHP_EOL)
-            ->addBody($this->config['return'])
+            ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);')
+            ->addBody($this->getReturnStatement())
             ->addParameter('id')->setType('Int');
     }
 
-    public function createAndStoreMethodGenerator(ClassType $class)
+
+    public function createAndStoreMethodGenerator(ClassType $class): void
     {
         $class->addMethod('create');
         if (!key_exists('Relations', $this->attributes)) {
             $method = $class->addMethod('store')
                 ->addComment('Store a newly created resource in storage')
-                ->addComment('@param Request $request');
-            $method->addParameter('request')->setType(Request::class);
-            return '';
+                ->addComment('@param Request $request')
+                ->addBody($this->getReturnStatement())
+                ->addParameter('request')->setType(Request::class);
+            return;
         }
         $method = $class->addMethod('store')
             ->addBody('$' . strtolower($this->modelName) . ' = new ' . ucfirst($this->modelName) . '();')
@@ -124,17 +132,17 @@ class ControllerGenerator
         $this->associateInStore($method);
         $method->addBody('$' . strtolower($this->modelName) . '->save();')
             ->addComment('Store a newly created resource in storage')
-            ->addComment('@param Request $request');
-        $method->addParameter('request')->setType(Request::class);
-
+            ->addComment('@param Request $request')
+            ->addBody($this->getReturnStatement())
+            ->addParameter('request')->setType(Request::class);
     }
 
-    public function associateInStore($method)
+    public function associateInStore($method): void
     {
         if (key_exists('Relations', $this->attributes)) {
             foreach ($this->attributes['Relations'] as $typeRelation => $relations) {
                 if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
-                    return '';
+                    return;
                 }
                 foreach ($relations as $value) {
                     $this->baseRelationName = explode('::', $value)[1];
@@ -150,11 +158,11 @@ class ControllerGenerator
     {
         $method = $class->addMethod('edit');
         if (key_exists('Relations', $this->attributes)) {
-            $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::withCommonRelations()->findOrFail($id);' . PHP_EOL)
-                ->addBody($this->config['return']);
+            $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::withCommonRelations()->findOrFail($id);')
+                ->addBody($this->getReturnStatement());
         } else {
-            $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);' . PHP_EOL)
-                ->addBody($this->config['return']);
+            $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);')
+                ->addBody($this->getReturnStatement());
         };
         $method->addParameter('id')->setType('Int');
 
@@ -164,8 +172,8 @@ class ControllerGenerator
         $this->UpdateMethodFindIntoRelation($method , $namespace);
         $this->associateInUpdate($method);
         $method->addBody('$' . strtolower($this->modelName) . '->fill($request->all());')
-            ->addBody('$' . strtolower($this->modelName) . '->save();'.PHP_EOL)
-            ->addBody('return response()->json($' . strtolower($this->modelName).');')
+            ->addBody('$' . strtolower($this->modelName) . '->save();')
+            ->addBody($this->getReturnStatement())
             ->addComment('Update the specified resource in storage.')
             ->addComment('@param Request $request')
             ->addComment('@param int $id');
@@ -174,12 +182,12 @@ class ControllerGenerator
     }
 
 
-    public function UpdateMethodFindIntoRelation($method ,$namespace)
+    public function UpdateMethodFindIntoRelation($method ,$namespace): void
     {
         if (key_exists('Relations', $this->attributes)) {
             foreach ($this->attributes['Relations'] as $typeRelation => $relations) {
                 if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
-                    return '';
+                    return;
                 }
                 foreach ($relations as $value) {
                     $this->baseRelationName = explode('::', $value)[1];
@@ -190,12 +198,12 @@ class ControllerGenerator
         }
     }
 
-    public function associateInUpdate($method)
+    public function associateInUpdate($method): void
     {
         if (key_exists('Relations', $this->attributes)) {
             foreach ($this->attributes['Relations'] as $typeRelation => $relations) {
                 if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
-                    return '';
+                    return;
                 }
                 foreach ($relations as $value) {
                     $this->baseRelationName = explode('::', $value)[1];
@@ -209,15 +217,15 @@ class ControllerGenerator
     public function destroyMethodGenerator(ClassType $class)
     {
         $class->addMethod('destroy')
-            ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::destroy($id);' . PHP_EOL)
-                ->addBody($this->config['return'])
+            ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::destroy($id);')
+                ->addBody($this->getReturnStatement())
             ->addParameter('id')->setType('Int');
     }
 
     public function createDirectory()
     {
         if (!is_dir($this->pathOfController)) {
-            mkdir($this->pathOfController, 0777, true);
+            mkdir($this->pathOfController, 0775, true);
         }
     }
 
@@ -226,6 +234,23 @@ class ControllerGenerator
         touch($this->pathOfController . $this->nameController . 'Controller.php');
         file_put_contents($this->pathOfController . $this->nameController . 'Controller.php', $template);
         return true;
+    }
+
+    public function getReturnStatement($plural = false): string
+    {
+        if (str_contains($this->return, ':data')) {
+            $modelNameInReturn = $plural ? Str::plural(Str::camel($this->modelName)) : Str::camel($this->modelName);
+
+            return PHP_EOL . str_replace(':data', '$' . $modelNameInReturn, $this->return);
+        }
+
+        return $this->return;
+    }
+
+    // It comes before return statement to initialize $data
+    public function getDataStatement(): string
+    {
+        return '$data = $' . $this->modelName . ';';
     }
 
     public function __toString(): string

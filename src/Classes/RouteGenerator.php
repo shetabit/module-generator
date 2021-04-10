@@ -55,7 +55,7 @@ class RouteGenerator
             if($i == 0) { $namespace->addUse(Route::class);  $this->finalTemplate .='<?php' . PHP_EOL;}
             $this->finalTemplate .=  $this->GenerateRouteTemplates($option[0] , $namespace);
             $this->touchAndPutContent($this->finalTemplate);
-            $this->message .=  "|-- ".$this->nameRoute." Route successfully generate" . PHP_EOL;
+            $this->message .=  "|-- ".$this->nameRoute." Route successfully generated" . PHP_EOL;
             $i++;
         }
         return $this->message;
@@ -76,25 +76,25 @@ class RouteGenerator
     public function setBody($route , $option)
     {
         if ($option == "CRUD"){
-             $route .= "\tRoute::apiResource('".$this->nameRoute."' , '".$this->nameRoute."Controller');".PHP_EOL;
+             $route .= "    Route::apiResource('".$this->nameRoute."' , '".$this->nameRoute."Controller');".PHP_EOL;
             return $route;
         }
         for ($i = 0; $i< strlen($option) ; $i++){
 
             if ($option[$i] == 'R'){
-               $route .= "\tRoute::name('index')->get('/', '".$this->nameRoute."Controller@index');".PHP_EOL;
-               $route .= "\tRoute::name('show')->get('/{id?}', '".$this->nameRoute."Controller@show');".PHP_EOL;
+               $route .= "    Route::name('index')->get('/', '".$this->nameRoute."Controller@index');".PHP_EOL;
+               $route .= "    Route::name('show')->get('/{id?}', '".$this->nameRoute."Controller@show');".PHP_EOL;
             }
             if ($option[$i] == 'C'){
-                $route .= "\tRoute::name('create')->get('/create', '".$this->nameRoute."Controller@create');".PHP_EOL;
-                $route .= "\tRoute::name('store')->post('/', '".$this->nameRoute."Controller@show');".PHP_EOL;
+                $route .= "    Route::name('create')->get('/create', '".$this->nameRoute."Controller@create');".PHP_EOL;
+                $route .= "    Route::name('store')->post('/', '".$this->nameRoute."Controller@show');".PHP_EOL;
             }
             if ($option[$i] == 'U'){
-                $route .= "\tRoute::name('edit')->get('/{id}/edit', '".$this->nameRoute."Controller@create');".PHP_EOL;
-                $route .= "\tRoute::name('update')->put('/', '".$this->nameRoute."Controller@show');".PHP_EOL;
+                $route .= "    Route::name('edit')->get('/{id}/edit', '".$this->nameRoute."Controller@create');".PHP_EOL;
+                $route .= "    Route::name('update')->put('/', '".$this->nameRoute."Controller@show');".PHP_EOL;
             }
             if ($option[$i] == 'D'){
-                $route .="\tRoute::name('destroy')->delete('/', '".$this->nameRoute."Controller@destroy');".PHP_EOL;
+                $route .="    Route::name('destroy')->delete('/', '".$this->nameRoute."Controller@destroy');".PHP_EOL;
             }
         }
         return $route;

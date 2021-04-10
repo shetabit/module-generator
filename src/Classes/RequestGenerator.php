@@ -59,7 +59,7 @@ class RequestGenerator
                 $method->addBody('];');
                 $template = '<?php' . PHP_EOL . $namespace;
                 $this->touchAndPutContent($template);
-                $this->message .= "|-- Requests " . ucfirst($key) . " successfully generate" . PHP_EOL;
+                $this->message .= "|-- Requests " . ucfirst($key) . " successfully generated" . PHP_EOL;
             }
 
         }

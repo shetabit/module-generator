@@ -41,7 +41,7 @@ class GenerateModuleCommand extends Command
      */
     public function handle()
     {
-        if (!file_exists(config_path()."/modulegenerator.php")){
+        if (!file_exists(config_path()."/generator.php")){
             $this->error("Create your module generator config file ");
             $this->warn("Path for creating =>". config_path());
             die();
@@ -56,7 +56,7 @@ class GenerateModuleCommand extends Command
      |_____/ |_| |_| \___| \__|\__,_||_.__/ |_| \__|
         ");
         $this->info('Generating ... ');
-        $processes = count(\config()->get('modulegenerator') , COUNT_RECURSIVE);
+        $processes = count(\config('generator') , COUNT_RECURSIVE);
         $Progress = $this->getOutput()->createProgressBar($processes);
         $Progress->setBarCharacter("/");
         $moduleGenerator = app(ModuleGenerator::class);

@@ -13,7 +13,7 @@ use Shetabit\ModuleGenerator\Contracts\ModuleGenerator;
 use Shetabit\ModuleGenerator\Contracts\RequestGenerator;
 use Shetabit\ModuleGenerator\Contracts\RouteGenerator;
 
-class GeneratorServiceProvider extends ServiceProvider
+class ModuleGeneratorServiceProvider extends ServiceProvider
 {
     public function register()
     {
@@ -42,17 +42,13 @@ class GeneratorServiceProvider extends ServiceProvider
 
     public function boot()
     {
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                GenerateModuleCommand::class,
-                PublishModuleGeneratorCommand::class
-            ]);
-        }
+        $this->commands([
+            GenerateModuleCommand::class,
+            PublishModuleGeneratorCommand::class
+        ]);
 
         $this->publishes([
-            __DIR__.'/../Config/modulegenerator.php' => config_path('modulegenerator.php'),
-            __DIR__.'/../Config/moduleConfig.php' => config_path('moduleConfig.php'),
-
+            __DIR__.'/../Config/generator.php' => config_path('generator.php'),
         ],'config');
 
     }

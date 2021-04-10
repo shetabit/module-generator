@@ -16,8 +16,8 @@ class MigrationGenerator
     protected $models;
     protected $module;
     protected $fields;
-    protected $nameOfMigration;
-    protected $pathOfMigration;
+    protected $migrationName;
+    protected $migrationPath;
 
     public function __construct($module , $models)
     {
@@ -27,12 +27,16 @@ class MigrationGenerator
 
     public function generate(): string
     {
-        if (!key_exists('Models', $this->models)) return '';
+        if (!key_exists('Models', $this->models)) {
+            return '';
+        }
         foreach ($this->models as $key => $model) {
-            $this->pathOfMigration = module_path($this->module) . "/Database/Migrations/";
+            $this->migrationPath = module_path($this->module) . "/Database/Migrations/";
+
             return $this->migrationsGenerator($model);
         }
 
+        return '';
     }
 
     public function migrationsGenerator($model): string
@@ -42,16 +46,17 @@ class MigrationGenerator
             if (key_exists('Relations', $fields)) {
                 $relation = $fields['Relations'];
             }
-            $this->nameOfMigration = $key;
+            $this->migrationName = $key;
             $namespace = new PhpNamespace('');
             $namespace->addUse(Migration::class)->addUse(Blueprint::class)->addUse(Schema::class);
-            $class = $namespace->addClass('Create' . Str::plural($this->nameOfMigration) . 'Table');
+            $class = $namespace->addClass('Create' . Str::plural($this->migrationName) . 'Table');
             $class->setExtends(Migration::class);
             $this->addMethodsInMigration($class, $fields['Fields'] , $relation);
             $template = '<?php' . PHP_EOL . $namespace;
             $this->touchAndPutContent($template);
-            $this->message .= "|-- Migration " . $this->nameOfMigration . " successfully generate" . PHP_EOL;
+            $this->message .= "|-- Migration " . $this->migrationName . " successfully generated" . PHP_EOL;
         }
+
         return $this->message;
     }
 
@@ -59,20 +64,20 @@ class MigrationGenerator
     {
 
         $methodUp = $class->addMethod('up')
-         ->addBody("Schema::create('".Str::plural(Str::snake($this->nameOfMigration))."', function (Blueprint \$table) {".PHP_EOL."\t \$table->id();");
+         ->addBody("Schema::create('".Str::plural(Str::snake($this->migrationName))."', function (Blueprint \$table) {".PHP_EOL."    \$table->id();");
         $methodUp->addBody($this->addFieldsInMethod($fields));
         if ($relation != null) {
             foreach ($relation as $key => $item) {
                 if (!is_array($item) && Str::camel($item) == 'morphTo') {
-                    $methodUp->addBody("\t \$table->integer('" . strtolower($this->nameOfMigration) . "able_id');");
-                    $methodUp->addBody("\t \$table->string('" . strtolower($this->nameOfMigration) . "able_type');");
+                    $methodUp->addBody("    \$table->integer('" . strtolower($this->migrationName) . "able_id');");
+                    $methodUp->addBody("    \$table->string('" . strtolower($this->migrationName) . "able_type');");
 
                 }
             }
         }
-        $methodUp->addBody("\t \$table->timestamps();".PHP_EOL."});");
+        $methodUp->addBody("    \$table->timestamps();".PHP_EOL."});");
         $class->addMethod('down')
-            ->addBody("Schema::dropIfExists('".Str::plural(Str::snake($this->nameOfMigration))."');");
+            ->addBody("Schema::dropIfExists('".Str::plural(Str::snake($this->migrationName))."');");
         return $class;
 
     }
@@ -80,7 +85,7 @@ class MigrationGenerator
     public function addFieldsInMethod($fields)
     {
         foreach($fields as $key => $infoField){
-            $field = "\t \$table->".$infoField['type']."('".$key."')";
+            $field = "    \$table->".$infoField['type']."('".$key."')";
             if (!key_exists('options', $infoField)) return $field.";";
             return $this->addOptionsInFields($field  ,$infoField['options']);
         }
@@ -102,12 +107,12 @@ class MigrationGenerator
     public function touchAndPutContent($template): bool
     {
         foreach (Finder::create()->files()
-            ->name("*create_".Str::plural(Str::snake($this->nameOfMigration))."_table.php")
-            ->in($this->pathOfMigration) as $file) {
+            ->name("*create_".Str::plural(Str::snake($this->migrationName))."_table.php")
+            ->in($this->migrationPath) as $file) {
             unlink($file->getPathname());
         }
-        $tableFileName = date('Y_m_d_His_') ."create_".Str::plural(Str::snake($this->nameOfMigration))."_table.php";
-        $pathOfFile = $this->pathOfMigration.$tableFileName;
+        $tableFileName = date('Y_m_d_His_') ."create_".Str::plural(Str::snake($this->migrationName))."_table.php";
+        $pathOfFile = $this->migrationPath.$tableFileName;
         touch($pathOfFile);
         file_put_contents($pathOfFile, $template);
         return true;

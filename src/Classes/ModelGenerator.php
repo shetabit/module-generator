@@ -41,7 +41,7 @@ class ModelGenerator
             $template = $this->generateModelTemplates($model, $attribute);
             $template = '<?php' . PHP_EOL . $template;
             $this->touchAndPutContent($template);
-            $this->message .= "|-- Model " . $model . " successfully generate" . PHP_EOL;
+            $this->message .= "|-- Model " . $model . " successfully generated" . PHP_EOL;
         }
 
         return $this->message;
@@ -92,7 +92,7 @@ class ModelGenerator
         foreach ($attribute['Relations'] as $typeRelation => $relations) {
             if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
                 $this->morphRelation($class);
-                return '';
+                continue;
             }
             foreach ($relations as $value) {
                 /**
@@ -106,7 +106,7 @@ class ModelGenerator
 
                 $relationName = strtolower(Helper::configurationRelationsName($baseRelationName, $typeRelation));
                 $this->withRelation[] = $relationName;
-                $namespace->addUse('Modules\\' . Str::camel($relationModel) . '\Entities\\' . $relationName);
+                $namespace->addUse('Modules\\' . Str::camel($relationModel) . '\Entities\\' . $baseRelationName);
                 $class->addMethod($relationName)
                     ->addBody('return $this->' . Str::camel($typeRelation) . '(' . $baseRelationName . '::class);')
                     ->setReturnType('Illuminate\Database\Eloquent\Relations\\' . $typeRelation);
@@ -125,7 +125,7 @@ class ModelGenerator
     {
         $class->addMethod('scopeWithCommonRelations')
             ->addBody('if (isset(static::$commonRelations) && !empty(static::$commonRelations)) {')
-            ->addBody("\t\$query->with(static::\$commonRelations);")
+            ->addBody("    \$query->with(static::\$commonRelations);")
             ->addBody('}')
             ->addParameter('query');
     }

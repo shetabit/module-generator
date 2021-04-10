@@ -20,23 +20,21 @@ class ModuleGenerator
 
     public function __construct()
     {
-        $this->config = \config()->get('modulegenerator');
+        $this->config = \config()->get('generator');
         $this->modules = $this->config['Modules'];
     }
 
 
     public function generate()
     {
-
         $this->ModulesGenerator($this->modules);
     }
 
     public function ModulesGenerator($modules)
     {
-
         foreach ($modules as $module => $model){
             Artisan::call('module:make ' . $module);  // ModulesGenerator
-            $this->result .= "* Modules ".$module." Successfully Generate".PHP_EOL;
+            $this->result .= "* Modules ".$module." successfully generated".PHP_EOL;
 
             if (key_exists('Models', $model)) {
 
