@@ -1,6 +1,6 @@
 <?php
 
-namespace Shetabit\ModuleGenerator\Provider;
+namespace Shetabit\ModuleGenerator\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Shetabit\ModuleGenerator\Commands\GenerateModuleCommand;
