@@ -1,6 +1,6 @@
 <?php
 
-namespace Shetabit\ModuleGenerator\Classes;
+namespace Shetabit\ModuleGenerator\Classes\Generators;
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -43,15 +43,13 @@ class MigrationGenerator
     {
         foreach ($model as $key => $fields) {
             $relation = null;
-            if (key_exists('Relations', $fields)) {
-                $relation = $fields['Relations'];
-            }
+            $relations = $fields['Relations'] ?? [];
             $this->migrationName = $key;
             $namespace = new PhpNamespace('');
             $namespace->addUse(Migration::class)->addUse(Blueprint::class)->addUse(Schema::class);
             $class = $namespace->addClass('Create' . Str::plural($this->migrationName) . 'Table');
             $class->setExtends(Migration::class);
-            $this->addMethodsInMigration($class, $fields['Fields'] , $relation);
+            $this->addMethodsInMigration($class, $fields['Fields'] , $relations);
             $template = '<?php' . PHP_EOL . $namespace;
             $this->touchAndPutContent($template);
             $this->message .= "|-- Migration " . $this->migrationName . " successfully generated" . PHP_EOL;
@@ -84,12 +82,17 @@ class MigrationGenerator
 
     public function addFieldsInMethod($fields)
     {
+        $fieldsString = '';
         foreach($fields as $key => $infoField){
             $field = "    \$table->".$infoField['type']."('".$key."')";
-            if (!key_exists('options', $infoField)) return $field.";";
-            return $this->addOptionsInFields($field  ,$infoField['options']);
+            if (!key_exists('options', $infoField)) {
+                $field .= ";";
+            } else {
+                $field =  $this->addOptionsInFields($field  ,$infoField['options']);
+            }
+            $fieldsString .= $field . PHP_EOL;
         }
-        return $fields;
+        return $fieldsString;
     }
 
     public function addOptionsInFields($field , $options)

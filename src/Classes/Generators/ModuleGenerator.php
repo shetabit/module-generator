@@ -1,5 +1,5 @@
 <?php
-namespace Shetabit\ModuleGenerator\Classes;
+namespace Shetabit\ModuleGenerator\Classes\Generators;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;

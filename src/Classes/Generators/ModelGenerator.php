@@ -1,6 +1,6 @@
 <?php
 
-namespace Shetabit\ModuleGenerator\Classes;
+namespace Shetabit\ModuleGenerator\Classes\Generators;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -35,6 +35,7 @@ class ModelGenerator
     public function generateModels($models): string
     {
         foreach ($models as $model => $attribute) {
+            $this->withRelation = [];
             $this->modelName = $model;
             $this->pathOfModel = module_path($this->module) . "/Entities/" . $model . '.php';
 
@@ -57,26 +58,26 @@ class ModelGenerator
 
         //check exists Fields key in attribute array
         if (key_exists('Fields', $attribute)) {
-            $namespace = $this->setFallibleInModel($class, $attribute, $namespace);
+            $namespace = $this->setfillableInModel($class, $attribute, $namespace);
         }
         //check exists Relations key in attribute array
-        if (key_exists('Relations', $attribute)) {
+        if (key_exists('Relations', $attribute) && !empty($attribute['Relations'])) {
             $this->addWithCommonRelations($class);
             $this->setRelationsInModel($namespace, $class, $attribute);
         }
-        $class->addProperty('commonRelations' , $this->withRelation)->setType('array')->setProtected()->setStatic();
+        $class->addProperty('commonRelations' , $this->withRelation)->setProtected()->setStatic();
 
         return $namespace;
     }
 
-    public function setFallibleInModel($class, $attribute, $namespace)
+    public function setfillableInModel($class, $attribute, $namespace)
     {
 
         foreach ($attribute['Fields'] as $key => $item) {
-            $fallible[] = $key;
+            $fillable[] = $key;
         }
 
-        $class->addProperty('fallible', $fallible)->setType('array')->setProtected();
+        $class->addProperty('fillable', $fillable)->setProtected();
         $this->touchAndPutContent('<?php' . PHP_EOL . $namespace);
         return $namespace;
     }

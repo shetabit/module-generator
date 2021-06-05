@@ -1,6 +1,6 @@
 <?php
 
-namespace Shetabit\ModuleGenerator\Classes;
+namespace Shetabit\ModuleGenerator\Classes\Generators;
 
 use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
@@ -36,11 +36,11 @@ class ForeignKeyGenerator
         }
         $namespace = new PhpNamespace('');
 
-        foreach ($this->models as $key => $model) {
+        foreach ($this->models as $model) {
             $continue = false;
-            foreach ($model as $key2 => $relation) {
-                $this->modelName = $key2;
-                if (!key_exists('Relations', $relation)) {
+            foreach ($model as $key => $relation) {
+                $this->modelName = $key;
+                if (!key_exists('Relations', $relation) && empty($relation['Relations'])) {
                     $continue = true;
                 }
             }
@@ -52,9 +52,11 @@ class ForeignKeyGenerator
             $class->setExtends(Migration::class);
             $this->foreignKeyGenerator($model, $class);
         }
-        $template = '<?php' . PHP_EOL . $namespace;
-        $this->touchAndPutContent($template);
-        $this->message .= "|-- Foreign keys successfully generated" . PHP_EOL;
+        if (count($namespace->getClasses()) !== 0) {
+            $template = '<?php' . PHP_EOL . $namespace;
+            $this->touchAndPutContent($template);
+            $this->message .= "|-- Foreign keys successfully generated" . PHP_EOL;
+        }
 
         return $this->message;
     }
@@ -101,7 +103,7 @@ class ForeignKeyGenerator
     public function touchAndPutContent($template): bool
     {
         foreach (Finder::create()->files()
-                     ->name("*create_foreign_keys_table.php")
+                     ->name("*add_foreign_keys.php")
                      ->in($this->migrationPath) as $file) {
             unlink($file->getPathname());
         }

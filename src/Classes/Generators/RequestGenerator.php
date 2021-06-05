@@ -1,18 +1,12 @@
 <?php
 
 
-namespace Shetabit\ModuleGenerator\Classes;
+namespace Shetabit\ModuleGenerator\Classes\Generators;
 
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
-use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\GlobalFunction;
 use Nette\PhpGenerator\PhpNamespace;
-use phpDocumentor\Reflection\DocBlock\Tags\Method;
-use phpDocumentor\Reflection\DocBlock\Tags\Return_;
-use function MongoDB\BSON\toJSON;
 
 class RequestGenerator
 {
@@ -36,26 +30,44 @@ class RequestGenerator
 
     public function generateRequests($models)
     {
+        $messages = '';
         foreach ($models as $model => $value) {
-            if (!key_exists('Requests', $value)) return '';
-                return $this->generateRequestTemplates($model, $value['Requests']);
-
+            if (!key_exists('Requests', $value)) continue;
+                $messages .= $this->generateRequestTemplates($model, $value['Requests']);
         }
+
+        return $messages;
     }
 
     public function generateRequestTemplates($model , $request)
     {
         foreach ($request as $dir => $value) {
+            if (!isset($value['store'])) {
+                $request[$dir]['store'] = [];
+            }
+            if (!isset($value['update'])) {
+                $request[$dir]['update'] = [];
+            }
+            if (isset($value['both'])) {
+                $request[$dir]['store'] = array_merge($request[$dir]['store'], $value['both']);
+                $request[$dir]['update'] = array_merge($request[$dir]['update'], $value['both']);
+            }
+        }
+
+        foreach ($request as $dir => $value) {
             foreach ($value as $key => $item) {
+                if ($key === 'both') {
+                    continue;
+                }
                 $namespace = new PhpNamespace('Modules\\' . $this->module . '\Http\Requests\\'.ucwords($dir));
                 $namespace->addUse(FormRequest::class);
-                $this->nameOfRequest = ucwords($dir).ucfirst($key).'Request';
+                $this->nameOfRequest = ucwords($model).ucfirst($key).'Request';
                 $this->fullPathOfRequest = module_path($this->module)."/Http/Requests/".ucfirst($dir);
-                $class = $namespace->addClass(ucwords($dir).ucfirst($key).'Request');
+                $class = $namespace->addClass(ucwords($model).ucfirst($key).'Request');
                 $class->setExtends(FormRequest::class);
-                $method = $class->addMethod('roles');
+                $method = $class->addMethod('rules');
                 $method->addBody('return  [');
-                $this->addRoles($item ,$method);
+                $this->addRules($item ,$method);
                 $method->addBody('];');
                 $template = '<?php' . PHP_EOL . $namespace;
                 $this->touchAndPutContent($template);
@@ -68,15 +80,17 @@ class RequestGenerator
     }
 
 
-    public function addRoles($items ,  $method)
+    public function addRules($items, $method)
     {
         /**
          * @var $method  GlobalFunction
          */
-        foreach ($items as $field => $roles) {
-            $encodedRoles = json_encode($roles);
-            return $method->addBody("'".$field."' => ".$encodedRoles.",");
+        $body = '';
+        foreach ($items as $field => $rules) {
+            $encodedRules = json_encode($rules);
+            $body .= "    '".$field."' => ".$encodedRules."," . PHP_EOL;
         }
+        $method->addBody($body);
     }
 
     public function touchAndPutContent($template)
@@ -90,7 +104,7 @@ class RequestGenerator
     {
         if (!is_dir($this->fullPathOfRequest))
         {
-            mkdir($this->fullPathOfRequest, 0777, true);
+            mkdir($this->fullPathOfRequest, 0755, true);
         }
     }
 

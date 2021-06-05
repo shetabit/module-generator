@@ -18,25 +18,25 @@ class ModuleGeneratorServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(ModuleGenerator::class, function () {
-            return new \Shetabit\ModuleGenerator\Classes\ModuleGenerator();
+            return new \Shetabit\ModuleGenerator\Classes\Generators\ModuleGenerator();
         });
         $this->app->singleton(ModelGenerator::class, function ($module, $models) {
-            return new \Shetabit\ModuleGenerator\Classes\ModelGenerator($models[0] , $models[1]);
+            return new \Shetabit\ModuleGenerator\Classes\Generators\ModelGenerator($models[0] , $models[1]);
         });
         $this->app->singleton(MigrationGenerator::class, function ($module, $models) {
-            return new \Shetabit\ModuleGenerator\Classes\MigrationGenerator($models[0] , $models[1]);
+            return new \Shetabit\ModuleGenerator\Classes\Generators\MigrationGenerator($models[0] , $models[1]);
         });
         $this->app->singleton(ControllerGenerator::class, function ($module, $models) {
-            return new \Shetabit\ModuleGenerator\Classes\ControllerGenerator($models[0] , $models[1]);
+            return new \Shetabit\ModuleGenerator\Classes\Generators\ControllerGenerator($models[0] , $models[1]);
         });
         $this->app->singleton(RouteGenerator::class, function ($module, $models) {
-            return new \Shetabit\ModuleGenerator\Classes\RouteGenerator($models[0] , $models[1]);
+            return new \Shetabit\ModuleGenerator\Classes\Generators\RouteGenerator($models[0] , $models[1]);
         });
         $this->app->singleton(ForeignKeyGenerator::class, function ($module, $models) {
-            return new \Shetabit\ModuleGenerator\Classes\ForeignKeyGenerator($models[0] , $models[1]);
+            return new \Shetabit\ModuleGenerator\Classes\Generators\ForeignKeyGenerator($models[0] , $models[1]);
         });
         $this->app->singleton(RequestGenerator::class, function ($module, $models) {
-            return new \Shetabit\ModuleGenerator\Classes\RequestGenerator($models[0] , $models[1]);
+            return new \Shetabit\ModuleGenerator\Classes\Generators\RequestGenerator($models[0] , $models[1]);
         });
     }
 

@@ -1,12 +1,13 @@
 <?php
 
-namespace Shetabit\ModuleGenerator\Classes;
+namespace Shetabit\ModuleGenerator\Classes\Generators;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
+use Shetabit\ModuleGenerator\Classes\ModelName;
 use Shetabit\ModuleGenerator\Helpers\Helper;
 
 class ControllerGenerator
@@ -14,11 +15,10 @@ class ControllerGenerator
 
     public string $message = '';
     protected $models;
-    protected $modelName;
+    protected ModelName $modelName;
     protected $module;
     protected $pathOfController;
     protected $CRUD;
-    protected $nameController;
     /**
      * @var mixed|string
      */
@@ -40,58 +40,65 @@ class ControllerGenerator
 
     public function generate(): string
     {
+        $message = '';
         foreach ($this->models as $model => $this->attributes) {
-            $this->modelName = $model;
+            $this->modelName = new ModelName($model);
             if (!key_exists('CRUD', $this->attributes)) {
                 return '';
             }
             $this->CRUD = $this->attributes['CRUD'];
 
-            return $this->controllerGenerator($this->module);
+            $message .= $this->controllerGenerator($this->module);
         }
 
-        return '';
+        return $message;
     }
 
     public function controllerGenerator($module): string
     {
+        $message = '';
         foreach ($this->CRUD as $name => $option) {
-            $this->nameController = $name;
-            $this->pathOfController = module_path($module) . "/Http/Controllers/" . $this->nameController . "/";
-            $template = $this->generateControllerTemplates($option[0]);
+            $this->pathOfController = module_path($module) . "/Http/Controllers/" . $name . '/';
+            $template = $this->generateControllerTemplates($option[0], $name);
             $template = '<?php' . PHP_EOL . $template;
             $this->createDirectory();
             $this->touchAndPutContent($template);
-            $this->message .= "|-- " . $this->nameController . "Controller successfully generated" . PHP_EOL;
+            $message .= "|-- " . $this->modelName . "Controller ({$name}) successfully generated" . PHP_EOL;
         }
 
-        return $this->message;
+        return $message;
     }
 
-    public function generateControllerTemplates($option): PhpNamespace
+    public function generateControllerTemplates($option, $name): PhpNamespace
     {
-        $namespace = new PhpNamespace('Modules\\' . $this->module . '\Http\Controllers\\' . $this->nameController);
+        $namespace = new PhpNamespace('Modules\\' . $this->module . '\Http\Controllers\\' . $name);
         $namespace->addUse(Controller::class)
             ->addUse(Request::class)
             ->addUse('Modules\\' . $this->module . '\Entities\\' . $this->modelName);
-        $class = $namespace->addClass($this->nameController . "Controller");
+        if ($this->hasCreate($option)) {
+            $namespace->addUse($this->getStoreRequestNamespace($name));
+        }
+        if ($this->hasUpdate($option)) {
+            $namespace->addUse($this->getUpdateRequestNamespace($name));
+        }
+        $class = $namespace->addClass($this->modelName . "Controller");
         $class->setExtends(Controller::class);
 
-        $this->setMethodToController($class, $option, $namespace);
+        $this->setMethodToController($class, $option, $namespace, $name);
 
         return $namespace;
     }
 
-    public function setMethodToController($class, $option, $namespace)
+    public function setMethodToController($class, $option, $namespace, $userName)
     {
             if (str_contains($option , 'R')) {
                 $this->indexAndShowMethodGenerator($class);
             }
-            if (str_contains($option, 'C')) {
-                $this->createAndStoreMethodGenerator($class);
+            if ($this->hasCreate($option)) {
+                $this->storeMethodGenerator($class, $userName);
             }
-            if (str_contains($option, 'U')) {
-                $this->editAndUpdateMethodGenerator($class , $namespace);
+            if ($this->hasUpdate($option)) {
+                $this->updateMethodGenerator($class , $namespace, $userName);
             }
             if (str_contains($option, 'D')) {
                 $this->destroyMethodGenerator($class);
@@ -101,84 +108,71 @@ class ControllerGenerator
     public function indexAndShowMethodGenerator(classType $class)
     {
         $method = $class->addMethod('index');
-        if (key_exists('Relations', $this->attributes)) {
-            $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::withCommonRelations()->get();')
+        if (key_exists('Relations', $this->attributes) && !empty($this->attributes['Relations'])) {
+            $method->addBody('$' . $this->modelName->getPluralForController() . ' = ' . $this->modelName . '::withCommonRelations()->get();')
                 ->addBody($this->getReturnStatement(true));
         } else {
-            $method->addBody('$' . strtolower($this->modelName) . 's = ' . ucfirst($this->modelName) . '::query()->get();')
+            $method->addBody('$' . $this->modelName->getPluralForController() . ' = ' . $this->modelName . '::query()->get();')
                 ->addBody($this->getReturnStatement(true));
         }
-        $class->addMethod('show')
-            ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);')
-            ->addBody($this->getReturnStatement())
-            ->addParameter('id')->setType('Int');
+        $method = $class->addMethod('show');
+        if (key_exists('Relations', $this->attributes) && !empty($this->attributes['Relations'])) {
+            $method->addBody('$' . $this->modelName->getSingularForController() . ' = ' . $this->modelName . '::withCommonRelations()->findOrFail($id);');
+        } else {
+            $method->addBody('$' .  $this->modelName->getSingularForController() . ' = ' . $this->modelName . '::findOrFail($id);');
+        }
+        $method->addBody($this->getReturnStatement())
+            ->addParameter('id');
     }
 
 
-    public function createAndStoreMethodGenerator(ClassType $class): void
+    public function storeMethodGenerator(ClassType $class, $userName): void
     {
-        $class->addMethod('create');
-        if (!key_exists('Relations', $this->attributes)) {
-            $method = $class->addMethod('store')
-                ->addComment('Store a newly created resource in storage')
-                ->addComment('@param Request $request')
-                ->addBody($this->getReturnStatement())
-                ->addParameter('request')->setType(Request::class);
-            return;
-        }
         $method = $class->addMethod('store')
-            ->addBody('$' . strtolower($this->modelName) . ' = new ' . ucfirst($this->modelName) . '();')
-            ->addBody('$' . strtolower($this->modelName) . '->fill($request->all());');
+            ->addBody('$' . $this->modelName->getSingularForController() . ' = new ' . $this->modelName . '();')
+            ->addBody('$' . $this->modelName->getSingularForController() . '->fill($request->all());');
         $this->associateInStore($method);
-        $method->addBody('$' . strtolower($this->modelName) . '->save();')
+        $method->addBody('$' . $this->modelName->getSingularForController() . '->save();')
             ->addComment('Store a newly created resource in storage')
             ->addComment('@param Request $request')
             ->addBody($this->getReturnStatement())
-            ->addParameter('request')->setType(Request::class);
+            ->addParameter('request')
+            ->setType($this->getStoreRequestNamespace($userName));
     }
 
     public function associateInStore($method): void
     {
         if (key_exists('Relations', $this->attributes)) {
             foreach ($this->attributes['Relations'] as $typeRelation => $relations) {
-                if (!is_array($relations) && Str::camel($relations) == 'morphTo'){
+                if ((!is_array($relations) && Str::camel($relations) == 'morphTo') || $this->doesRelationHaveAssociate($relations)){
                     return;
                 }
                 foreach ($relations as $value) {
                     $this->baseRelationName = explode('::', $value)[1];
                     $this->relationName = Helper::configurationRelationsName($this->baseRelationName, $typeRelation);
-                    $method->addBody('$' . strtolower($this->modelName) . '->' . strtolower($this->relationName) . '()->associate($request->' . strtolower($this->baseRelationName) . '_id);');
+                    $method->addBody('$' . $this->modelName->getSingularForController() . '->' . Str::camel($this->relationName) . '()->associate($request->' . strtolower($this->baseRelationName) . '_id);');
                 }
             }
         }
     }
 
 
-    public function editAndUpdateMethodGenerator(ClassType $class , $namespace)
+    public function updateMethodGenerator(ClassType $class , $namespace, $userName)
     {
-        $method = $class->addMethod('edit');
-        if (key_exists('Relations', $this->attributes)) {
-            $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::withCommonRelations()->findOrFail($id);')
-                ->addBody($this->getReturnStatement());
-        } else {
-            $method->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);')
-                ->addBody($this->getReturnStatement());
-        };
-        $method->addParameter('id')->setType('Int');
-
         $method = $class->addMethod('update')
-            ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);');
+            ->addBody('$' . $this->modelName->getSingularForController() . ' = ' . ucfirst($this->modelName) . '::query()->findOrFail($id);');
 
         $this->UpdateMethodFindIntoRelation($method , $namespace);
         $this->associateInUpdate($method);
-        $method->addBody('$' . strtolower($this->modelName) . '->fill($request->all());')
-            ->addBody('$' . strtolower($this->modelName) . '->save();')
+        $method->addBody('$' . $this->modelName->getSingularForController() . '->fill($request->all());')
+            ->addBody('$' . $this->modelName->getSingularForController() . '->save();')
             ->addBody($this->getReturnStatement())
             ->addComment('Update the specified resource in storage.')
             ->addComment('@param Request $request')
-            ->addComment('@param int $id');
-        $method->addParameter('request')->setType(Request::class);
-        $method->addParameter('id')->setType('Int');
+            ->addComment('@param $id');
+        $method->addParameter('request')
+            ->setType($this->getUpdateRequestNamespace($userName));
+        $method->addParameter('id');
     }
 
 
@@ -208,7 +202,7 @@ class ControllerGenerator
                 foreach ($relations as $value) {
                     $this->baseRelationName = explode('::', $value)[1];
                     $this->relationName = Helper::configurationRelationsName($this->baseRelationName, $typeRelation);
-                    $method->addBody('$' . strtolower($this->modelName) . '->' . strtolower($this->relationName) . '()->associate($' . strtolower($this->baseRelationName) . ');');
+                    $method->addBody('$' . $this->modelName->getSingularForController() . '->' . strtolower($this->relationName) . '()->associate($' . strtolower($this->baseRelationName) . ');');
                 }
             }
         }
@@ -217,9 +211,9 @@ class ControllerGenerator
     public function destroyMethodGenerator(ClassType $class)
     {
         $class->addMethod('destroy')
-            ->addBody('$' . strtolower($this->modelName) . ' = ' . ucfirst($this->modelName) . '::destroy($id);')
+            ->addBody('$' . $this->modelName->getSingularForController() . ' = ' . ucfirst($this->modelName) . '::findOrFail($id)->destroy();')
                 ->addBody($this->getReturnStatement())
-            ->addParameter('id')->setType('Int');
+            ->addParameter('id');
     }
 
     public function createDirectory()
@@ -231,15 +225,16 @@ class ControllerGenerator
 
     public function touchAndPutContent($template): bool
     {
-        touch($this->pathOfController . $this->nameController . 'Controller.php');
-        file_put_contents($this->pathOfController . $this->nameController . 'Controller.php', $template);
+        touch($this->pathOfController . $this->modelName . 'Controller.php');
+        file_put_contents($this->pathOfController . $this->modelName . 'Controller.php', $template);
+
         return true;
     }
 
     public function getReturnStatement($plural = false): string
     {
         if (str_contains($this->return, ':data')) {
-            $modelNameInReturn = $plural ? Str::plural(Str::camel($this->modelName)) : Str::camel($this->modelName);
+            $modelNameInReturn = $plural ? $this->modelName->getPluralForController() : $this->modelName->getSingularForController();
 
             return PHP_EOL . str_replace(':data', '$' . $modelNameInReturn, $this->return);
         }
@@ -247,10 +242,29 @@ class ControllerGenerator
         return $this->return;
     }
 
-    // It comes before return statement to initialize $data
-    public function getDataStatement(): string
+    public function getStoreRequestNamespace($userName)
     {
-        return '$data = $' . $this->modelName . ';';
+        return 'Modules\\' . $this->module . '\Http\Requests\\' . $userName . '\\' . "{$this->modelName}StoreRequest";
+    }
+
+    public function getUpdateRequestNamespace($userName)
+    {
+        return 'Modules\\' . $this->module . '\Http\Requests\\' . $userName . '\\'  . "{$this->modelName}UpdateRequest";
+    }
+
+    public function hasCreate($option)
+    {
+        return str_contains($option, 'C');
+    }
+
+    public function hasUpdate($option)
+    {
+        return str_contains($option, 'U');
+    }
+
+    public function doesRelationHaveAssociate($relation)
+    {
+        return !in_array(Str::camel($relation), ['hasOne', 'hasMany', 'morphTo']);
     }
 
     public function __toString(): string

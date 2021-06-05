@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Shetabit\ModuleGenerator\Classes;
+namespace Shetabit\ModuleGenerator\Classes\Generators;
 
 
 use App\Http\Controllers\Controller;
@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Nette\PhpGenerator\PhpNamespace;
+use Shetabit\ModuleGenerator\Classes\ModelName;
 
 class RouteGenerator
 {
@@ -27,6 +28,7 @@ class RouteGenerator
     protected string $message = '';
     protected string $finalTemplate ='';
     protected $model;
+    protected ModelName $modelName;
 
     public function __construct($module , $models)
     {
@@ -39,6 +41,8 @@ class RouteGenerator
         foreach ($this->models as $model => $attribute) {
             if (!key_exists('CRUD', $attribute)) return '';
             $this->model = $model;
+            $this->modelName = new ModelName($model);
+
             $this->CRUD = $attribute['CRUD'];
             return $this->RouteGenerator($this->module);
         }
@@ -47,7 +51,6 @@ class RouteGenerator
     public function RouteGenerator($module): string
     {
         $i = 0;
-        $len = count($this->CRUD);
         foreach ($this->CRUD as $name => $option) {
             $this->nameRoute = $name;
             $this->pathOfRoute = module_path($module) . "/Routes/api.php";
@@ -63,7 +66,6 @@ class RouteGenerator
 
     public function GenerateRouteTemplates($option , $namespace): string
     {
-
         $namespace .= "Route::name('".Str::snake($this->nameRoute).".')";
         $namespace .= "->namespace('".$this->nameRoute."')";
         $namespace .= "->prefix('".Str::snake($this->nameRoute)."')";
@@ -76,7 +78,7 @@ class RouteGenerator
     public function setBody($route , $option)
     {
         if ($option == "CRUD"){
-             $route .= "    Route::apiResource('".$this->nameRoute."' , '".$this->nameRoute."Controller');".PHP_EOL;
+             $route .= "    Route::apiResource('".$this->modelName->getPluralForRoute()."' , '".$this->modelName."Controller');".PHP_EOL;
             return $route;
         }
         for ($i = 0; $i< strlen($option) ; $i++){

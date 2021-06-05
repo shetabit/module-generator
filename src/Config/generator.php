@@ -1,7 +1,7 @@
 <?php
 #Example Format Config
 return [
-    'return'=> 'return response()->json($data);',
+    'return_statement'=> 'return response()->json($data);',
 
     'Modules' => [
         'Blog' => [
