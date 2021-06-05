@@ -211,7 +211,7 @@ class ControllerGenerator
     public function destroyMethodGenerator(ClassType $class)
     {
         $class->addMethod('destroy')
-            ->addBody('$' . $this->modelName->getSingularForController() . ' = ' . ucfirst($this->modelName) . '::findOrFail($id)->destroy();')
+            ->addBody('$' . $this->modelName->getSingularForController() . ' = ' . ucfirst($this->modelName) . '::findOrFail($id)->delete();')
                 ->addBody($this->getReturnStatement())
             ->addParameter('id');
     }
